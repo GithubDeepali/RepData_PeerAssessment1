@@ -5,7 +5,7 @@ Output: html_document
 
 Dataset : Activity Monitoring Data
 
-Reading the dataset and filtering all the rows not containing NA
+Reading th dataset and filtering all the rows not containing NA
 Total no of Steps taken per day
 
 ```{r}
