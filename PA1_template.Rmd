@@ -1,25 +1,78 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+Title: "Peer Assignment 1 Repoducible Research"
+Author: "Deepali Gupta"
+Date: "Tuesday, July 14, 2015"
+Output: html_document
+
+Dataset : Activity Monitoring Data
+
+Reading the dataset and filtering all the rows not containing NA
+Total no of Steps taken per day
+
+```{r}
+library(dplyr)
+activitydata <- read.csv("./activity.csv")
+activityfilter <- filter(activitydata, !is.na(activitydata$steps))
+groupactivitybydate <- group_by(activityfilter, date)
+stepsperday <- summarize(groupactivitybydate, sum(steps))
+head(stepsperday)
+names(stepsperday) <- c("Date", "Steps")
+```
+
+Histogram of total number of steps taken per Day:
+
+```{r, echo=TRUE}
+table(stepsperday$Steps)
+hist(stepsperday$Steps,xlab = "Steps", ylab = "Count", main = "No. of steps taken per day", col = "green")
+```
+
+Mean and Median of total number of steps taken per day
+
+```{r}
+mean(stepsperday$Steps, na.rm = TRUE)
+median(stepsperday$Steps, na.rm = TRUE)
+```
 
 
-## Loading and preprocessing the data
+Time Series Plot of Average number of steps taken
 
+```{r}
+groupactivitybyinterval <- group_by(activityfilter, interval)
+averagestepsbyinterval <- summarize(groupactivitybyinterval, sum(steps)/n())
+names(averagestepsbyinterval) <- c("interval", "Average_Steps")
+head(averagestepsbyinterval)
+ with(averagestepsbyinterval, plot(interval, Average_Steps, type = "l", xlab = "Interval", ylab = "Average Steps", main = "Average number of Steps taken in 5-min interval", col = "blue"))
+filter(averagestepsbyinterval, Average_Steps == max(averagestepsbyinterval$Average_Steps))
+```
 
+Imputing Missing Values
 
-## What is mean total number of steps taken per day?
-
-
-
-## What is the average daily activity pattern?
-
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+##Total number of missing values in a dataset
+sum(is.na(activitydata$steps))
+##Strategy for filling all the missing values by mean of 5-min interval
+meanstepsbyinterval <- summarize(groupactivitybyinterval, mean(steps))
+names(meanstepsbyinterval) <- c("interval", "Mean_Steps")
+fillNA <- numeric()
+for(i in 1:nrow(activitydata))
+  {
+    obs <- activitydata[i, ]
+    if(is.na(obs$steps))
+      {
+      steps <- subset(meanstepsbyinterval, interval == obs$interval)$Mean_Steps
+      }
+    else
+      {
+      steps <- obs$steps
+    }
+    fillNA[i] <- steps
+  }
+activitydatafillNA <- activitydata
+activitydatafillNA$steps <- fillNA
+head(activitydatafillNA)
+##Histogram of total number of steps taken each day with mean and median
+activitydatafillNAperday <- aggregate(steps ~ date, data = activitydatafillNA, FUN = sum)
+hist(activitydatafillNAperday$steps, xlab = "Steps per Day", ylab = "Count", main = "Total No of Steps taken per day", col = "red")
+mean(activitydatafillNAperday$steps)
+median(activitydatafillNAperday$steps)
+```
+The estimate for the mean remain the same, However the estimate for median shifted a bit. For the days there was missing data has been replaced by mean of 5-min interval and the total no. of steps for each missing day is 10766.18.It increased th interval size of 10000-15000 by 8, since there were 8 missing days
